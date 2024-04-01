@@ -695,31 +695,30 @@ public class ExamPractise {
     }
 
     public Map<String, Object> DoTopic(String questionId, String answerId, String answerSequence, String userId, String examId, String paperId, String types) {
+        /* 获取相关的Map全局缓存数据 */
+        HashMap<String, String[]> questionMapByAll = MapInit.questionMapByAllStatic;
+        HashMap<String, ArrayList<String[]>> answerMap = MapInit.answerMapStatic;
+
+        /* 其它参数初始化 */
         Map<String, Object> jsonMap = new LinkedHashMap<>();  //放Json内容
-        int i = 0;
         String correctStatus = "0";
         String correctAnswerId = "";
         String clarify = "";
         String questionType = "";
 
         //**  这里是捞单条题目内容
-        sql = "select * from exam_question where id = " + questionId;
-
-        SqlRowSet questionRowSet = jdbcTemplate.queryForRowSet(sql);
-        questionRowSet.next();
-        jsonMap.put("questionId", questionRowSet.getString("id"));
-        jsonMap.put("questionType", questionRowSet.getString("question_type"));
-        jsonMap.put("questionNameEn", questionRowSet.getString("question_name"));
-        jsonMap.put("questionNameCn", questionRowSet.getString("question_name_cn"));
-        jsonMap.put("questionPoint", questionRowSet.getString("question_points"));
-        jsonMap.put("clarify", questionRowSet.getString("clarify"));
-        jsonMap.put("fileId", questionRowSet.getString("file_id"));
-        jsonMap.put("appId", questionRowSet.getString("app_id"));
-        jsonMap.put("psign", questionRowSet.getString("psign"));
-        jsonMap.put("examId", questionRowSet.getString("exam_id"));
-        jsonMap.put("paperId", questionRowSet.getString("paper_id"));
-        questionType = questionRowSet.getString("question_type");    //拿取题型并赋值，用于后面的不同题型判断
-        //* 单条题目基本信息获取完毕
+        String[] questionContent = questionMapByAll.get(questionId);
+        jsonMap.put("questionId", questionId);
+        jsonMap.put("questionType", questionContent[0]);
+        jsonMap.put("questionNameEn", questionContent[1]);
+        jsonMap.put("questionNameCn", questionContent[2]);
+        jsonMap.put("questionPoint", questionContent[4]);
+        jsonMap.put("clarify", questionContent[5]);
+        jsonMap.put("fileId", questionContent[6]);
+        jsonMap.put("appId", questionContent[7]);
+        jsonMap.put("psign", questionContent[8]);
+        jsonMap.put("examId", questionContent[9]);
+        questionType = questionContent[0];            //拿取题型并赋值，用于后面的不同题型判断
 
 
         //** 这里找出是不是收藏的题目
@@ -733,18 +732,17 @@ public class ExamPractise {
         }
         //*收藏处理完毕
 
-        List<Map<String, Object>> answerList = new ArrayList<Map<String, Object>>();   //答案的数组
+        List<Map<String, Object>> answerListReturn = new ArrayList<Map<String, Object>>();   //答案的数组
 
         if (!questionType.equals("3")) {       //如果不是问答题，即如果是单选或多选
             //** 处理答案
             String answerSequenceDecode = new String(Base64.decodeBase64(answerSequence));  //需要先Base64解码
+            ArrayList<String[]> answerList = answerMap.get(questionId);    //几条答案，放进一个ArrayList，每一条答案，又是一个文本组织，多个字段放了进去
 
-            sql = "select * from exam_answer where status='1' and question_id = " + questionId + " order by field(id," + answerSequenceDecode + ")";
-            SqlRowSet answerRowSet = jdbcTemplate.queryForRowSet(sql);
-
-            while (answerRowSet.next()) {
-                i++;
+            for (int i = 0; i < answerList.size(); i++) {
                 String optionSelect = "";
+                String[] answerContent = answerList.get(i);
+
                 if (i == 1) {
                     optionSelect = "A";
                 } else if (i == 2) {
@@ -757,17 +755,17 @@ public class ExamPractise {
                     optionSelect = "E";
                 }
 
-                Map<String, Object> answerMap = new LinkedHashMap<>();  //放answer的map
-                answerMap.put("id", answerRowSet.getString("id"));
-                answerMap.put("answerContentEn", optionSelect + ". " + answerRowSet.getString("answer_content"));
-                answerMap.put("answerContentCn", answerRowSet.getString("answer_content_cn"));
-                answerMap.put("correctFlag", answerRowSet.getString("correct_answer"));
+                Map<String, Object> answerMapReturn = new LinkedHashMap<>();  //放answer的map
+                answerMapReturn.put("id", answerContent[0]);
+                answerMapReturn.put("answerContentEn", optionSelect + ". " + answerContent[1]);
+                answerMapReturn.put("answerContentCn", answerContent[2]);
+                answerMapReturn.put("correctFlag", answerContent[3]);
 
-                if (answerRowSet.getString("correct_answer").equals("1")) {   //如果正确答案是这个，则把ID加起来
-                    correctAnswerId = correctAnswerId + answerRowSet.getString("id") + ",";
+                if (answerContent[3].equals("1")) {   //如果正确答案是这个，则把ID加起来
+                    correctAnswerId = correctAnswerId + answerContent[0] + ",";
                 }
 
-                answerList.add(answerMap);
+                answerListReturn.add(answerMapReturn);
 
 //                if (answerRowSet.getString("correct_answer").equals("1")) {    //如果是正确状态的话，则赋值正确ID，总有一个可以赋值到的
 //                    correctAnswerId = answerRowSet.getString("id");
@@ -831,7 +829,7 @@ public class ExamPractise {
             jdbcTemplate.execute(sql);
         }
 
-        jsonMap.put("answerList", answerList);   //将答案列表，放进json
+        jsonMap.put("answerList", answerListReturn);   //将答案列表，放进json
         jsonMap.put("correctStatus", correctStatus);   //把答染ID的顺序放进jsonMap
         jsonMap.put("selectAnswer", answerId);   //所选答案ID
         jsonMap.put("correctAnswer", correctAnswerId);   //所选答案ID
@@ -922,7 +920,7 @@ public class ExamPractise {
         HashMap<String, ArrayList<String[]>> answerMap = MapInit.answerMapStatic;
 
         Map<String, Object> jsonMap = new LinkedHashMap<>();  //放Json内容
-        String correctStatus = "0";
+        String correctStatus = "1";
         String correctAnswerId = "";
         String selectAnswerId = "";
         String answerSequence = "";
@@ -966,7 +964,7 @@ public class ExamPractise {
         List<Map<String, Object>> answerListReturn = new ArrayList<Map<String, Object>>();   //答案的数组
         ArrayList<String[]> answerList = answerMap.get(questionId);    //几条答案，放进一个ArrayList，每一条答案，又是一个文本组织，多个字段放了进去
 
-        if (!questionType.equals("3")) {
+        if (!questionType.equals("3")) {    //如果不是问题题，是选择题才会有用例案
             Collections.shuffle(answerList);   //如果有答案的情况下，把答案随机排序一下
 
             for (int i = 0; i < answerList.size(); i++) {
@@ -997,24 +995,12 @@ public class ExamPractise {
 
                 answerSequence = answerSequence + answerContent[0] + ",";   //将答案ID的顺序记录下来
                 answerListReturn.add(answerMapReturn);
-
-
-                //////这里看看答案是否正确
-                sql = "select count(*)  as correctcount from exam_answer where question_id = " + questionId +
-                        " and id in (" + selectAnswerId + ")" + " and correct_answer = '1' and status = '1'";      //找出正确的答案，如果正确，则correctcount为1
-                SqlRowSet answerCorrectRs = jdbcTemplate.queryForRowSet(sql);
-                answerCorrectRs.next();
-                if (answerCorrectRs.getString("correctcount").equals("1")) {   //如果是正确
-                    correctStatus = "1";
-                } else {
-                    correctStatus = "0";
-                }
             }
 
             answerSequence = Base64.encodeBase64String(answerSequence.substring(0, answerSequence.length() - 1).getBytes(StandardCharsets.UTF_8));
             correctAnswerId = correctAnswerId.substring(0, correctAnswerId.length() - 1);   //把最后的,去除
             jsonMap.put("answerList", answerListReturn);   //将答案列表，放进json
-            jsonMap.put("correctStatus", correctStatus);   //把答染ID的顺序放进jsonMap
+            jsonMap.put("correctStatus", correctStatus);   //是否正确
             jsonMap.put("selectAnswer", selectAnswerId);   //所选答案ID
             jsonMap.put("correctAnswer", correctAnswerId);   //所选答案ID
             jsonMap.put("answerSequence", answerSequence);   //答案序列
@@ -1022,7 +1008,7 @@ public class ExamPractise {
         } else {   //如果是问答题的话
             correctStatus = "";
             jsonMap.put("answerList", answerListReturn);   //将答案列表，放进json
-            jsonMap.put("correctStatus", correctStatus);   //把答染ID的顺序放进jsonMap
+            jsonMap.put("correctStatus", correctStatus);   //是否正确
             jsonMap.put("selectAnswer", "");   //所选答案ID
             jsonMap.put("correctAnswer", "");   //所选答案ID
             jsonMap.put("answerSequence", "");   //答案序列
