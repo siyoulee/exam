@@ -26,11 +26,11 @@ public class ExamPractise {
 
     @RequestMapping(path = "/GetExamPage", produces = "application/json;charset=UTF-8", method = RequestMethod.POST)
     public String GetExamPage(@RequestBody JSONObject json, @RequestHeader HttpHeaders headers) {
-        //获取相关的Map全局缓存数据
+        /* 获取相关的Map全局缓存数据 */
         HashMap<String, String[]> examMap = MapInit.examMapStatic;
         HashMap<String, String[]> paperMap = MapInit.paperMapStatic;
 
-        //其它参数初始化
+        /* 其它参数初始化 */
         String paperId = "";
         String questionSubject = "";
         Map<String, Object> jsonMap = new LinkedHashMap<>();  //放Json内容
@@ -47,21 +47,20 @@ public class ExamPractise {
         } catch (Exception e) {
         }
 
-        //试卷信息获取
+        /* 试卷信息获取 */
         String[] paperValues = paperMap.get(paperId);
         String paperName = paperValues[1];   //试卷名称：paper_name
         String paperDesc = paperValues[2];   //试卷描述：paper_desc
         String paperPoint = paperValues[3];  //试卷分数：paper_points
         String paperTime = paperValues[4];   //考试时长：paper_time
-        //试卷信息获取完毕
 
-        //拿取课程的语言
+
+        /* 拿取课程的语言 */
         String examLanguage = examMap.get(examId)[2];
         jsonMap.put("examLanguage", examLanguage);
-        //*
 
 
-        ////把收藏的题目的ID，放进数组，否则后面很多遍历，怕那台烂云服务器顶不住
+        /* 把收藏的题目的ID，放进数组，否则后面很多遍历，怕那台烂云服务器顶不住 */
         String sqlFavorites = "select question_id from favorites_question where user_id='" + userId + "'";
         List favoritesList = jdbcTemplate.queryForList(sqlFavorites);
         int[] arrFavorites = new int[favoritesList.size()];  //定义一个数组放，会省一点资源
@@ -74,10 +73,9 @@ public class ExamPractise {
                 k++;
             }
         }
-        ////数组生成完成
 
 
-        ////这里是组装需要拿出题目清单的SQL语句
+        /* 这里是组装需要拿出题目清单的SQL语句 */
         if (practiseType.equals("4")) {            //这里拿的是模拟考试题
             paperName = "模拟考试";
             paperDesc = "模拟考试";
@@ -119,8 +117,6 @@ public class ExamPractise {
 
                 //拿取考点名称
                 jsonMap.put("paperName", paperName);
-                //*
-
                 jsonMap.put("paperId", paperId);
                 jsonMap.put("userId", userId);
                 jsonMap.put("paperName", paperName + " 错题复习");
@@ -138,8 +134,6 @@ public class ExamPractise {
 
                 //拿取考点名称
                 jsonMap.put("paperName", paperName);
-                //*
-
                 jsonMap.put("paperId", paperId);
                 jsonMap.put("userId", userId);
                 jsonMap.put("paperName", paperName + " 收藏复习");
@@ -882,38 +876,41 @@ public class ExamPractise {
         /* 处理答案 */
         List<Map<String, Object>> answerListReturn = new ArrayList<Map<String, Object>>();   //答案的数组
         ArrayList<String[]> answerList = answerMap.get(questionId);
-        Collections.shuffle(answerList);
 
-        for (int i = 0; i < answerList.size(); i++) {
-            String[] answerContent = answerList.get(i);
-            String optionSelect = "";
-            if (i == 0) {
-                optionSelect = "A";
-            } else if (i == 1) {
-                optionSelect = "B";
-            } else if (i == 2) {
-                optionSelect = "C";
-            } else if (i == 3) {
-                optionSelect = "D";
-            } else if (i == 4) {
-                optionSelect = "E";
+        if (!questionDetail[0].equals("3")) {   //如果不是问答题，才有答案列表清单
+            Collections.shuffle(answerList);   //如果有答案的情况下，把答案随机排序一下
+
+            for (int i = 0; i < answerList.size(); i++) {
+                String[] answerContent = answerList.get(i);
+                String optionSelect = "";
+                if (i == 0) {
+                    optionSelect = "A";
+                } else if (i == 1) {
+                    optionSelect = "B";
+                } else if (i == 2) {
+                    optionSelect = "C";
+                } else if (i == 3) {
+                    optionSelect = "D";
+                } else if (i == 4) {
+                    optionSelect = "E";
+                }
+
+                answerSequence = answerSequence + answerContent[0] + ",";   //将答案ID的顺序记录下来
+
+                Map<String, Object> answerMapReturn = new LinkedHashMap<>();  //放question的map
+                answerMapReturn.put("id", answerContent[0]);
+                answerMapReturn.put("answerContentEn", optionSelect + ". " + answerContent[1]);
+                answerMapReturn.put("answerContentCn", answerContent[2]);
+                answerListReturn.add(answerMapReturn);
             }
 
-            answerSequence = answerSequence + answerContent[0] + ",";   //将答案ID的顺序记录下来
+            if (!answerSequence.equals("")) {   //把答案顺序Base64编码后返回
+                answerSequence = Base64.encodeBase64String(answerSequence.substring(0, answerSequence.length() - 1).getBytes(StandardCharsets.UTF_8));
+            }
 
-            Map<String, Object> answerMapReturn = new LinkedHashMap<>();  //放question的map
-            answerMapReturn.put("id", answerContent[0]);
-            answerMapReturn.put("answerContentEn", optionSelect + ". " + answerContent[1]);
-            answerMapReturn.put("answerContentCn", answerContent[2]);
-            answerListReturn.add(answerMapReturn);
+            jsonMap.put("answerList", answerListReturn);   //将答案列表，放进json
+            jsonMap.put("answerSequence", answerSequence);   //答案序列
         }
-
-        if (!answerSequence.equals("")) {   //把答案顺序Base64编码后返回
-            answerSequence = Base64.encodeBase64String(answerSequence.substring(0, answerSequence.length() - 1).getBytes(StandardCharsets.UTF_8));
-        }
-
-        jsonMap.put("answerList", answerListReturn);   //将答案列表，放进json
-        jsonMap.put("answerSequence", answerSequence);   //答案序列
 
         return jsonMap;
     }
@@ -967,9 +964,10 @@ public class ExamPractise {
         //** 处理答案
         answerSequence = new String(Base64.decodeBase64(answerSequence));
         List<Map<String, Object>> answerListReturn = new ArrayList<Map<String, Object>>();   //答案的数组
+        ArrayList<String[]> answerList = answerMap.get(questionId);    //几条答案，放进一个ArrayList，每一条答案，又是一个文本组织，多个字段放了进去
+
         if (!questionType.equals("3")) {
-            //** 处理答案
-            ArrayList<String[]> answerList = answerMap.get(questionId);    //几条答案，放进一个ArrayList，每一条答案，又是一个文本组织，多个字段放了进去
+            Collections.shuffle(answerList);   //如果有答案的情况下，把答案随机排序一下
 
             for (int i = 0; i < answerList.size(); i++) {
                 String[] answerContent = answerList.get(i);
@@ -1108,14 +1106,16 @@ public class ExamPractise {
         return jsonMap;
     }
 
-    public Map<String, Object> GetTopicList(int[] favoritesList, String sql, String types) {  //获取所有的题目
+    public Map<String, Object> GetTopicList(int[] favoritesList, String sql, String types) {  //按试卷做题：获取题目
+        /* 获取相关的Map全局缓存数据 */
+        HashMap<String, String[]> questionMapByAll = MapInit.questionMapByAllStatic;
+        HashMap<String, ArrayList<String[]>> answerMap = MapInit.answerMapStatic;
+
         Map<String, Object> jsonMap = new LinkedHashMap<>();  //放Json内容
         List<Map<String, Object>> questionRsList = new ArrayList<Map<String, Object>>();   //问题的数组
         String questionId = "";
-        String historyTopicSql = "";  //保存做题历史的SQL
-        int i = 0;
         int intFav = 0;
-        List<Map<String, Object>> questionList = new ArrayList<Map<String, Object>>();   //答案的列表
+        List<Map<String, Object>> questionList = new ArrayList<Map<String, Object>>();   //问题的列表
 
         questionRsList = jdbcTemplate.queryForList(sql);
 
@@ -1128,7 +1128,6 @@ public class ExamPractise {
             String answerSequence = "";   //答案的排序
 
             questionId = questionMapRs.get("id").toString();
-//            System.out.println(questionId);
             questionMap.put("questionId", questionMapRs.get("id").toString());
             questionMap.put("questionType", questionMapRs.get("question_type").toString());
             questionMap.put("questionNameEn", questionMapRs.get("question_name").toString());
@@ -1136,47 +1135,44 @@ public class ExamPractise {
             questionMap.put("questionSubject", questionMapRs.get("question_subject").toString());
             questionMap.put("questionPoint", questionMapRs.get("question_points").toString());
 
-            List<Map<String, Object>> answerList = new ArrayList<Map<String, Object>>();   //答案的列表
 
-            String sqlAnswer = "select * from exam_answer where question_id=" + questionId + " and status='1' order by rand()";
-//            System.out.println(questionId);
-//            SqlRowSet answerRs = jdbcTemplate.queryForRowSet(sqlAnswer);
-            List answerListRs = jdbcTemplate.queryForList(sqlAnswer);
 
-            i = 0;
-            if (answerListRs.size() != 0) {   //如果不是问答题，才有答案列表清单
-                Iterator itAnswer = answerListRs.iterator();
-                while (itAnswer.hasNext()) {
-                    Map<String, Object> answerMap = new LinkedHashMap<>();  //放Json内容
-                    Map answerMapList = (Map) itAnswer.next();
-                    i++;
+            /* 处理答案 */
+            List<Map<String, Object>> answerListReturn = new ArrayList<Map<String, Object>>();   //答案的列表，用于返回给json用
+            ArrayList<String[]> answerList = answerMap.get(questionId);
+
+            if (!questionMapRs.get("question_type").toString().equals("3")) {   //如果不是问答题，才有答案列表清单
+                Collections.shuffle(answerList);     //如果有答案的情况下，把答案随机排序一下
+
+                for (int i = 0; i < answerList.size(); i++) {
+                    String[] answerContent = answerList.get(i);
                     String optionSelect = "";
-                    if (i == 1) {
+                    if (i == 0) {
                         optionSelect = "A";
-                    } else if (i == 2) {
+                    } else if (i == 1) {
                         optionSelect = "B";
-                    } else if (i == 3) {
+                    } else if (i == 2) {
                         optionSelect = "C";
-                    } else if (i == 4) {
+                    } else if (i == 3) {
                         optionSelect = "D";
-                    } else if (i == 5) {
+                    } else if (i == 4) {
                         optionSelect = "E";
                     }
 
-                    answerMap.put("answerId", answerMapList.get("id").toString());
-                    answerMap.put("answerContentEn", optionSelect + ". " + answerMapList.get("answer_content").toString());
-                    answerMap.put("answerContentCn", answerMapList.get("answer_content_cn").toString());
-                    answerSequence = answerSequence + answerMapList.get("id").toString() + ",";   //将答案ID的顺序记录
-                    answerList.add(answerMap);
+                    Map<String, Object> answerMapReturn = new LinkedHashMap<>();  //放question的map
+                    answerMapReturn.put("answerId", answerContent[0]);
+                    answerMapReturn.put("answerContentEn", optionSelect + ". " + answerContent[1]);
+                    answerMapReturn.put("answerContentCn", answerContent[2]);
+                    answerSequence = answerSequence + answerContent[0] + ",";   //将答案ID的顺序记录
+                    answerListReturn.add(answerMapReturn);
                 }
                 answerSequence = Base64.encodeBase64String(answerSequence.substring(0, answerSequence.length() - 1).getBytes(StandardCharsets.UTF_8));
                 answerSequence = answerSequence.substring(0, answerSequence.length() - 1);
                 questionMap.put("answerSequence", answerSequence);
             }
-            questionMap.put("answerList", answerList);
+            questionMap.put("answerList", answerListReturn);
 
-            i = 0;
-
+            int i = 0;
             if (favoritesList.length != 0) {      //如果有收藏题
                 for (i = 0; i < favoritesList.length; i++) {   //如果有大于等于1条收藏的数据
                     if (favoritesList[i] == Integer.valueOf(questionId)) {
