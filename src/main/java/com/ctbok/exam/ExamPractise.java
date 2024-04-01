@@ -312,9 +312,6 @@ public class ExamPractise {
                     //exam_sequence状态更新完成
                 }
 
-                sql = "select * from exam_answer where question_id = " + questionId + " and status = '1' order by field(id," + answerSequenceDecode + ")";
-                SqlRowSet answerRs = jdbcTemplate.queryForRowSet(sql);
-
                 for (int j = 0; j < answerList.size(); j++) {
                     Map<String, Object> answerMapReturn = new LinkedHashMap<>();  //新的Map
                     String[] answerContent = answerList.get(j);   //从answer的arraylist中，并成数据
