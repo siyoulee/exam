@@ -58,14 +58,13 @@ public class CommandLineRunnerMap implements CommandLineRunner {
         }
 
 
-        //** 缓存问题清单（以paper_id为分割）
-        /*
+        /* 缓存问题清单（以paper_id为分割）
+        //参数说明
         [0]:question_type
         [1]:question_name
         [2]:question_name_cn
         [3]:question_subject
         [4]:question_points
-         */   //参数说明
         Iterator<Map.Entry<String, String[]>> iteratorPaperMap = paperMap.entrySet().iterator();
         while (iteratorPaperMap.hasNext()) {      //遍历试卷列表
             Map.Entry<String, String[]> entry = iteratorPaperMap.next();
@@ -81,6 +80,7 @@ public class CommandLineRunnerMap implements CommandLineRunner {
 
             paperQuestionMap.put(paperId, questionMapByPaper);    //把questionMap放到paperQuestionMap中，这样可以先索引paper_id，再索引question_id
         }
+        */
 
 
         //** 缓存问题清单（全部）
@@ -96,16 +96,17 @@ public class CommandLineRunnerMap implements CommandLineRunner {
         [8]:app_id
         [9]:exam_id
         [10]:paper_id
-
+        [11]:wx_video_url
          */   //参数说明
+
         sql = "select * from exam_question where status = '1' order by id asc";
         rs = jdbcTemplate.queryForRowSet(sql);
         while (rs.next()) {    //把问题清单捞出来
             String[] questionRecord = {rs.getString("question_type"), rs.getString("question_name"),
                     rs.getString("question_name_cn"), rs.getString("question_subject"),
                     rs.getString("question_points"), rs.getString("clarify"),
-                    rs.getString("file_id"), rs.getString("app_id"),
-                    rs.getString("psign"), rs.getString("exam_id"), rs.getString("paper_id")};
+                    rs.getString("file_id"), rs.getString("app_id"), rs.getString("psign"),
+                    rs.getString("exam_id"), rs.getString("paper_id"), rs.getString("wx_video_url")};
             questionMapByAll.put(rs.getString("id"), questionRecord);     //以question_id为key，question内容为value
 
             //处理答案

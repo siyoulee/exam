@@ -75,7 +75,7 @@ public class ExamPractise {
         }
 
 
-        /* 这里是组装需要拿出题目清单的SQL语句 */
+        /* 这里是组装需要拿出题目清单的SQL语句，这些SQL语句的组装，很难优化了，先用这样吧，反正question也不多，不像sequence_exam */
         if (practiseType.equals("4")) {            //这里拿的是模拟考试题
             paperName = "模拟考试";
             paperDesc = "模拟考试";
@@ -150,8 +150,11 @@ public class ExamPractise {
 
     @RequestMapping(path = "/PostExamPage", produces = "application/json;charset=UTF-8", method = RequestMethod.POST)
     public String PostExamPage(@RequestBody JSONObject json, @RequestHeader HttpHeaders headers) {
-        //获取相关的Map全局缓存数据
+        /* 获取相关的Map全局缓存数据 */
         HashMap<String, String[]> examMap = MapInit.examMapStatic;   //课程信息的全局缓存
+        HashMap<String, String[]> questionMapByAll = MapInit.questionMapByAllStatic;
+        HashMap<String, ArrayList<String[]>> answerMap = MapInit.answerMapStatic;
+
 
         //其它的参数初始化
         Map<String, Object> jsonMap = new LinkedHashMap<>();  //放Json内容
@@ -242,39 +245,39 @@ public class ExamPractise {
                 answerSequence = "";
             }
 
-            List<Map<String, Object>> answerList = new ArrayList<Map<String, Object>>();   //答案的列表
+            List<Map<String, Object>> answerListReturn = new ArrayList<Map<String, Object>>();   //答案的列表
             String answerSequenceDecode = new String(Base64.decodeBase64(answerSequence));  //需要先Base64解码
 
-            sql = "select * from exam_question where id = " + questionId;
-            SqlRowSet questionRs = jdbcTemplate.queryForRowSet(sql);
-            questionRs.next();
+            /* 处理问题内容 */
+            String[] questionContent = questionMapByAll.get(questionId);
+
             //放进新的Map
             questionMapPut.put("questionId", questionId);
-            questionMapPut.put("questionNameEn", questionRs.getString("question_name"));
-            questionMapPut.put("questionNameCn", questionRs.getString("question_name_cn"));
-            questionMapPut.put("questionSubject", questionRs.getString("question_subject"));
-            questionMapPut.put("questionType", questionRs.getString("question_type"));
-            questionMapPut.put("questionPoint", questionRs.getString("question_points"));
-            questionMapPut.put("clarify", questionRs.getString("clarify"));
-            questionMapPut.put("fileId", questionRs.getString("file_id"));
-            questionMapPut.put("appId", questionRs.getString("app_id"));
-            questionMapPut.put("psign", questionRs.getString("psign"));
-            questionMapPut.put("wxVideoUrl", questionRs.getString("wx_video_url"));
+            questionMapPut.put("questionNameEn", questionContent[1]);
+            questionMapPut.put("questionNameCn", questionContent[2]);
+            questionMapPut.put("questionSubject", questionContent[3]);
+            questionMapPut.put("questionType", questionContent[0]);
+            questionMapPut.put("questionPoint", questionContent[4]);
+            questionMapPut.put("clarify", questionContent[5]);
+            questionMapPut.put("fileId", questionContent[6]);
+            questionMapPut.put("appId", questionContent[7]);
+            questionMapPut.put("psign", questionContent[8]);
+            questionMapPut.put("wxVideoUrl", questionContent[11]);
             questionMapPut.put("selectAnswer", answerIdList);   //选择答案
-            questionMapPut.put("answerSequence", answerSequence);   //答案排序
-            questionType = questionRs.getString("question_type");
-
+            questionType = questionContent[0];
 
             if (questionType.equals("1") || questionType.equals("2")) {   //如果是单选或多选，才需要找出正确答案
-                sql = "select * from exam_answer where question_id = " + questionId;
-                SqlRowSet answerCorrectRs = jdbcTemplate.queryForRowSet(sql);
+                ArrayList<String[]> answerList = answerMap.get(questionId);    //几条答案，放进一个ArrayList，每一条答案，又是一个文本组织，多个字段放了进去
                 String[] answerIterate = answerIdList.split(",");
-                while (answerCorrectRs.next()) {
+
+                for (int j = 0; j < answerList.size(); j++) {
+                    String[] answerContent = answerList.get(j);   //从answer的arraylist中，并成数据
+
                     for (int k = 0; k < answerIterate.length; k++) {
-                        String answerRsId = answerCorrectRs.getString("id");
-                        String answerId = answerIterate[k].toString();
+                        String answerRsId = answerContent[0];
+                        String answerId = answerIterate[k];
                         if (answerId.equals(answerRsId)) {
-                            if (!answerCorrectRs.getString("correct_answer").equals("1")) {
+                            if (!answerContent[3].equals("1")) {
                                 correctStatus = "0";
                                 break;
                             }
@@ -311,34 +314,34 @@ public class ExamPractise {
 
                 sql = "select * from exam_answer where question_id = " + questionId + " and status = '1' order by field(id," + answerSequenceDecode + ")";
                 SqlRowSet answerRs = jdbcTemplate.queryForRowSet(sql);
-                int j = 0;
-                while (answerRs.next()) {
-                    Map<String, Object> answerMap = new LinkedHashMap<>();  //新的Map
 
-                    j++;
+                for (int j = 0; j < answerList.size(); j++) {
+                    Map<String, Object> answerMapReturn = new LinkedHashMap<>();  //新的Map
+                    String[] answerContent = answerList.get(j);   //从answer的arraylist中，并成数据
+
                     String optionSelect = "";
-                    if (j == 1) {
+                    if (j == 0) {
                         optionSelect = "A";
-                    } else if (j == 2) {
+                    } else if (j == 1) {
                         optionSelect = "B";
-                    } else if (j == 3) {
+                    } else if (j == 2) {
                         optionSelect = "C";
-                    } else if (j == 4) {
+                    } else if (j == 3) {
                         optionSelect = "D";
-                    } else if (j == 5) {
+                    } else if (j == 4) {
                         optionSelect = "E";
                     }
 
-                    answerMap.put("answerId", answerRs.getString("id"));
-                    answerMap.put("answerContentEn", optionSelect + ". " + answerRs.getString("answer_content"));
-                    answerMap.put("answerContentCn", answerRs.getString("answer_content_cn"));
-                    answerMap.put("correctFlag", answerRs.getString("correct_answer"));
-                    answerList.add(answerMap);
+                    answerMapReturn.put("answerId", answerContent[0]);
+                    answerMapReturn.put("answerContentEn", optionSelect + ". " + answerContent[1]);
+                    answerMapReturn.put("answerContentCn", answerContent[2]);
+                    answerMapReturn.put("correctFlag", answerContent[3]);
+                    answerListReturn.add(answerMapReturn);
                 }
             } else {
                 correctStatus = "1";    //问答，正确状态为空
             }
-            questionMapPut.put("answerList", answerList);
+            questionMapPut.put("answerList", answerListReturn);
             questionMapPut.put("correctStatus", correctStatus);
             correctStatus = "1";
 
@@ -1134,7 +1137,6 @@ public class ExamPractise {
             questionMap.put("questionNameCn", questionMapRs.get("question_name_cn").toString());
             questionMap.put("questionSubject", questionMapRs.get("question_subject").toString());
             questionMap.put("questionPoint", questionMapRs.get("question_points").toString());
-
 
 
             /* 处理答案 */
