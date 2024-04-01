@@ -1030,7 +1030,6 @@ public class ExamPractise {
             jsonMap.put("answerSequence", "");   //答案序列
         }
 
-
         return jsonMap;
     }
 
