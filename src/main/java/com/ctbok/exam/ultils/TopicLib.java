@@ -1,15 +1,19 @@
-package com.ctbok.exam.init;
+package com.ctbok.exam.ultils;
 
+import com.alibaba.fastjson2.JSONObject;
+import com.ctbok.exam.init.MapInit;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.CommandLineRunner;
+import org.springframework.http.HttpHeaders;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
-import org.springframework.stereotype.Component;
+import org.springframework.web.bind.annotation.*;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
 
-@Component
-public class CommandLineRunnerMap implements CommandLineRunner {
+@RestController
+@RequestMapping(path = "/exam")
+public class TopicLib {
     @Autowired
     private JdbcTemplate jdbcTemplate;
     private String sql = "";
@@ -18,20 +22,21 @@ public class CommandLineRunnerMap implements CommandLineRunner {
 
     HashMap<String, String[]> examMap = MapInit.examMapStatic;                    //以exam_id为key，exam内容为value
     HashMap<String, String[]> paperMap = MapInit.paperMapStatic;                  //以paper_id为key，paper内容为values
-//    HashMap<String, HashMap> paperQuestionMap = MapInit.paperQuestionMapStatic;   //以paper_id为key,以questionMap为value
+    //    HashMap<String, HashMap> paperQuestionMap = MapInit.paperQuestionMapStatic;   //以paper_id为key,以questionMap为value
 //    HashMap<String, String[]> questionMapByPaper = MapInit.questionMapByPaperStatic;            //以question_id为key，以question内容为value，但这个是分了paper去做的
     HashMap<String, String[]> questionMapByAll = MapInit.questionMapByAllStatic;            //以question_id为key，以question内容为value，但这个是分了paper去做的
     HashMap<String, ArrayList<String[]>> answerMap = MapInit.answerMapStatic;                //以question_id为key，以answer内容为value
 
-    @Override
-    public void run(String... args) throws Exception {
-
+    @RequestMapping(path = "/UpdateCache", produces = "application/json;charset=UTF-8", method = RequestMethod.POST)
+    public String UpdateCache(@RequestBody JSONObject json, @RequestHeader HttpHeaders headers) {
         //** 缓存课程
         /*
         [0]:name
         [1]:desc
         [2]:language
          */  //参数说明
+        examMap.clear();
+
         sql = "select * from exams where status = '1' order by id asc";
         rs = jdbcTemplate.queryForRowSet(sql);
         while (rs.next()) {
@@ -48,6 +53,8 @@ public class CommandLineRunnerMap implements CommandLineRunner {
         [3]:paper_points
         [4]:paper_time
          */   //参数说明
+        paperMap.clear();
+
         sql = "select * from exam_paper where status = '1' order by id asc";
         rs = jdbcTemplate.queryForRowSet(sql);
         while (rs.next()) {
@@ -97,6 +104,8 @@ public class CommandLineRunnerMap implements CommandLineRunner {
         [10]:paper_id
         [11]:wx_video_url
          */   //参数说明
+        questionMapByAll.clear();
+        answerMap.clear();
 
         sql = "select * from exam_question where status = '1' order by id asc";
         rs = jdbcTemplate.queryForRowSet(sql);
@@ -127,7 +136,26 @@ public class CommandLineRunnerMap implements CommandLineRunner {
             answerMap.put(rs.getString("id"), answerList);
         }
 
+        return "更新完成";
     }
 
-}
+    @RequestMapping(path = "/PublicTopic", produces = "application/json;charset=UTF-8", method = RequestMethod.POST)
+    public String PublicTopic(@RequestBody JSONObject json, @RequestHeader HttpHeaders headers) {
+        //** 缓存课程
+        /*
+        [0]:name
+        [1]:desc
+        [2]:language
+         */  //参数说明
+        sql = "select * from exams where status = '1' order by id asc";
+        rs = jdbcTemplate.queryForRowSet(sql);
+        while (rs.next()) {
+            String[] values = {rs.getString("name"), rs.getString("desc"), rs.getString("language")};
+            examMap.put(rs.getString("id"), values);
+        }
 
+
+
+        return "发布完成";
+    }
+}

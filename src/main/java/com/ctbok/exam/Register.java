@@ -399,15 +399,17 @@ public class Register {
             sql = "select a.* from exam_question a right join exam_paper b on a.paper_id = b.id where b.status = '1' and a.status = '1' and a.exam_id = " + examId + " and a.id not in (" +
                     "select question_id from exam_sequence where user_id = " + userId + " and exam_id = " + examId + ") order by a.question_type asc";
             SqlRowSet questionRS = jdbcTemplate.queryForRowSet(sql);
+
+            sql = "insert into exam_sequence(user_id,question_id,exam_id,paper_id,question_type,question_subject,status,do_status,wrong_do_status,fav_do_status) ";
             while (questionRS.next()) {
                 questionId = questionRS.getString("id");
                 paperId = questionRS.getString("paper_id");
                 questionType = questionRS.getString("question_type");
                 questionSubject = questionRS.getString("question_subject");
-                sql = "insert into exam_sequence(user_id,question_id,exam_id,paper_id,question_type,question_subject,status,do_status,wrong_do_status,fav_do_status) " +
-                        " values('" + userId + "','" + questionId + "','" + examId + "','" + paperId + "','" + questionType + "','" + questionSubject + "','','1','','')";
-                jdbcTemplate.execute(sql);
+                sql = sql + " values('" + userId + "','" + questionId + "','" + examId + "','" + paperId + "','" + questionType + "','" + questionSubject + "','','1','',''), ";
             }
+            sql = sql.substring(0, sql.length() - 1);  //最后的，不能要
+            jdbcTemplate.execute(sql);
 
             //再看看顺序做题列表，比试题列表大的情况，这表明了试题进行了删除
             sql = "delete from exam_sequence where exam_id = " + examId + " and user_id = " + userId + " and question_id not in (" +

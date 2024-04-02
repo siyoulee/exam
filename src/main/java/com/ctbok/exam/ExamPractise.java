@@ -743,15 +743,15 @@ public class ExamPractise {
                 String optionSelect = "";
                 String[] answerContent = answerList.get(i);
 
-                if (i == 1) {
+                if (i == 0) {
                     optionSelect = "A";
-                } else if (i == 2) {
+                } else if (i == 1) {
                     optionSelect = "B";
-                } else if (i == 3) {
+                } else if (i == 2) {
                     optionSelect = "C";
-                } else if (i == 4) {
+                } else if (i == 3) {
                     optionSelect = "D";
-                } else if (i == 5) {
+                } else if (i == 4) {
                     optionSelect = "E";
                 }
 

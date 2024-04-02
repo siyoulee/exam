@@ -2,6 +2,7 @@ package com.ctbok.exam.admin;
 
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
+import com.ctbok.exam.init.MapInit;
 import org.apache.maven.surefire.shade.org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -22,6 +23,17 @@ public class TopicManagement {
     private JdbcTemplate jdbcTemplate;
     private String sql;
     private List questionList;
+
+    private SqlRowSet rs;
+    private SqlRowSet rs2;
+
+    HashMap<String, String[]> examMap = MapInit.examMapStatic;                    //以exam_id为key，exam内容为value
+    HashMap<String, String[]> paperMap = MapInit.paperMapStatic;                  //以paper_id为key，paper内容为values
+    //    HashMap<String, HashMap> paperQuestionMap = MapInit.paperQuestionMapStatic;   //以paper_id为key,以questionMap为value
+//    HashMap<String, String[]> questionMapByPaper = MapInit.questionMapByPaperStatic;            //以question_id为key，以question内容为value，但这个是分了paper去做的
+    HashMap<String, String[]> questionMapByAll = MapInit.questionMapByAllStatic;            //以question_id为key，以question内容为value，但这个是分了paper去做的
+    HashMap<String, ArrayList<String[]>> answerMap = MapInit.answerMapStatic;                //以question_id为key，以answer内容为value
+
 
     @RequestMapping(path = "/GetTopicList", produces = "application/json;charset=UTF-8", method = RequestMethod.POST)
     public String GetTopicList(@RequestBody JSONObject json) {
@@ -380,6 +392,8 @@ public class TopicManagement {
         jsonMap.put("adminId", adminId);
         jsonMap.put("status", "1");
         jsonMap.put("msg", "题目添加成功");
+
+
 
         return json.toJSONString(jsonMap);
     }

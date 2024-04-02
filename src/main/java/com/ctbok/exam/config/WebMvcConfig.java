@@ -29,6 +29,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
                 .excludePathPatterns("/exam/GenerateExchangeCode")
                 .excludePathPatterns("/exam/Translation")
                 .excludePathPatterns("/exam/AutoTranslation")
+                .excludePathPatterns("/exam/UpdateCache")
 //                .excludePathPatterns("/exam/admin/GetTopicList")
 //                .excludePathPatterns("/exam/admin/UpdateTopic")
 //                .excludePathPatterns("/exam/admin/NewTopic")
