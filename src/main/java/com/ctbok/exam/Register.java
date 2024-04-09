@@ -382,39 +382,44 @@ public class Register {
     }
 
     public void GenerateSequenceExamList(String userId) {
-        SqlRowSet sqlRowSet;
-        String total = "";
         String questionId = "";
         String examId = "";
         String paperId = "";
         String questionType = "";
         String questionSubject = "";
 
+        // 第二步，拿出究竟这个人，有多少个课程是可以用的，下面这段，都是在有课程权限的情况下的增删改
         sql = "select * from exam_roles where user_id = " + userId + " and role = '1'";
         SqlRowSet rolesRS = jdbcTemplate.queryForRowSet(sql);
         while (rolesRS.next()) {
             examId = rolesRS.getString("exam_id");
+            String insertSql = "insert into exam_sequence(user_id,question_id,exam_id,paper_id,question_type,question_subject,status,do_status) values ";   //插入新题的语句
+            String deleteSql = "";
 
-            //先看看试题列表，比顺序做题列表大的时候的情况，就把试题列表加进顺序做题列表中
+            //第三步，先看看试题列表，比顺序做题列表大的时候的情况，就把试题列表加进顺序做题列表中
             sql = "select a.* from exam_question a right join exam_paper b on a.paper_id = b.id where b.status = '1' and a.status = '1' and a.exam_id = " + examId + " and a.id not in (" +
                     "select question_id from exam_sequence where user_id = " + userId + " and exam_id = " + examId + ") order by a.question_type asc";
             SqlRowSet questionRS = jdbcTemplate.queryForRowSet(sql);
+            questionRS.last();    //记录指针移到最后
+            int rowCount = questionRS.getRow();     //获取记录行数
 
-            sql = "insert into exam_sequence(user_id,question_id,exam_id,paper_id,question_type,question_subject,status,do_status,wrong_do_status,fav_do_status) ";
-            while (questionRS.next()) {
-                questionId = questionRS.getString("id");
-                paperId = questionRS.getString("paper_id");
-                questionType = questionRS.getString("question_type");
-                questionSubject = questionRS.getString("question_subject");
-                sql = sql + " values('" + userId + "','" + questionId + "','" + examId + "','" + paperId + "','" + questionType + "','" + questionSubject + "','','1','',''), ";
+            if (rowCount > 0) {   //如果记录数为0，就不用insert了
+                questionRS.beforeFirst();   //回到第一行
+                while (questionRS.next()) {
+                    questionId = questionRS.getString("id");
+                    paperId = questionRS.getString("paper_id");
+                    questionType = questionRS.getString("question_type");
+                    questionSubject = questionRS.getString("question_subject");
+                    insertSql = insertSql + " ('" + userId + "','" + questionId + "','" + examId + "','" + paperId + "','" + questionType + "','" + questionSubject + "','3','0'),";
+                }
+                insertSql = insertSql.substring(0, insertSql.length() - 1);  //最后的，不能要
+                jdbcTemplate.execute(insertSql);   //最后才执行insert，是因为这样效率更高，另外，
             }
-            sql = sql.substring(0, sql.length() - 1);  //最后的，不能要
-            jdbcTemplate.execute(sql);
 
-            //再看看顺序做题列表，比试题列表大的情况，这表明了试题进行了删除
-            sql = "delete from exam_sequence where exam_id = " + examId + " and user_id = " + userId + " and question_id not in (" +
+            //第四步，再看看顺序做题列表，比试题列表大的情况，这表明了试题进行了删除
+            deleteSql = "delete from exam_sequence where exam_id = " + examId + " and user_id = " + userId + " and question_id not in (" +
                     "select a.id from exam_question a right join exam_paper b on a.paper_id = b.id where b.status='1' and  a.status = '1' and a.exam_id = " + examId + ")";
-            jdbcTemplate.execute(sql);
+            jdbcTemplate.execute(deleteSql);
         }
     }
 }

@@ -153,7 +153,7 @@ public class ExamPractise {
         /* 获取相关的Map全局缓存数据 */
         HashMap<String, String[]> examMap = MapInit.examMapStatic;   //课程信息的全局缓存
         HashMap<String, String[]> questionMapByAll = MapInit.questionMapByAllStatic;
-        HashMap<String, ArrayList<String[]>> answerMap = MapInit.answerMapStatic;
+        LinkedHashMap<String, ArrayList<String[]>> answerMap = MapInit.answerMapStatic;
 
 
         //其它的参数初始化
@@ -307,7 +307,7 @@ public class ExamPractise {
                     }
 
                     //更新exam_sequence的状态
-                    sql = "update exam_sequence set do_status = '2', status = '" + correctStatus + "', paper_id = " + paperId + ", answer_id = '" + answerIdList + "'  where question_id = " + questionId + " and user_id = " + userId + " and gmt_update = now()";
+                    sql = "update exam_sequence set do_status = '2', status = '" + correctStatus + "', paper_id = " + paperId + ", answer_id = '" + answerIdList + "' gmt_update = now()  where question_id = " + questionId + " and user_id = " + userId;
                     jdbcTemplate.execute(sql);
                     //exam_sequence状态更新完成
                 }
@@ -569,7 +569,7 @@ public class ExamPractise {
         //
 
         //** 其它的map内容
-        jsonMap.put("userId", userId);    //两个固定的先放进去
+        jsonMap.put("userId", userId);    //三个固定的先放进去
         jsonMap.put("types", types);
         jsonMap.put("paperId", paperId);
 
@@ -697,7 +697,7 @@ public class ExamPractise {
     public Map<String, Object> DoTopic(String questionId, String answerId, String answerSequence, String userId, String examId, String paperId, String types) {
         /* 获取相关的Map全局缓存数据 */
         HashMap<String, String[]> questionMapByAll = MapInit.questionMapByAllStatic;
-        HashMap<String, ArrayList<String[]>> answerMap = MapInit.answerMapStatic;
+        LinkedHashMap<String, ArrayList<String[]>> answerMap = MapInit.answerMapStatic;
 
         /* 其它参数初始化 */
         Map<String, Object> jsonMap = new LinkedHashMap<>();  //放Json内容
@@ -842,7 +842,7 @@ public class ExamPractise {
 
         /* 获取相关的Map全局缓存数据 */
         HashMap<String, String[]> questionMapByAll = MapInit.questionMapByAllStatic;
-        HashMap<String, ArrayList<String[]>> answerMap = MapInit.answerMapStatic;
+        LinkedHashMap<String, ArrayList<String[]>> answerMap = MapInit.answerMapStatic;
 
 
         /* 其它内容的初始化 */
@@ -876,7 +876,7 @@ public class ExamPractise {
         ArrayList<String[]> answerList = answerMap.get(questionId);
 
         if (!questionDetail[0].equals("3")) {   //如果不是问答题，才有答案列表清单
-            Collections.shuffle(answerList);   //如果有答案的情况下，把答案随机排序一下
+            //Collections.shuffle(answerList);   //如果有答案的情况下，把答案随机排序一下
 
             for (int i = 0; i < answerList.size(); i++) {
                 String[] answerContent = answerList.get(i);
@@ -917,7 +917,7 @@ public class ExamPractise {
 
         /* 获取相关的Map全局缓存数据 */
         HashMap<String, String[]> questionMapByAll = MapInit.questionMapByAllStatic;
-        HashMap<String, ArrayList<String[]>> answerMap = MapInit.answerMapStatic;
+        LinkedHashMap<String, ArrayList<String[]>> answerMap = MapInit.answerMapStatic;
 
         Map<String, Object> jsonMap = new LinkedHashMap<>();  //放Json内容
         String correctStatus = "1";
@@ -965,7 +965,7 @@ public class ExamPractise {
         ArrayList<String[]> answerList = answerMap.get(questionId);    //几条答案，放进一个ArrayList，每一条答案，又是一个文本组织，多个字段放了进去
 
         if (!questionType.equals("3")) {    //如果不是问题题，是选择题才会有用例案
-            Collections.shuffle(answerList);   //如果有答案的情况下，把答案随机排序一下
+            //Collections.shuffle(answerList);   //如果有答案的情况下，把答案随机排序一下
 
             for (int i = 0; i < answerList.size(); i++) {
                 String[] answerContent = answerList.get(i);
@@ -1094,8 +1094,8 @@ public class ExamPractise {
 
     public Map<String, Object> GetTopicList(int[] favoritesList, String sql, String types) {  //按试卷做题：获取题目
         /* 获取相关的Map全局缓存数据 */
-        HashMap<String, String[]> questionMapByAll = MapInit.questionMapByAllStatic;
-        HashMap<String, ArrayList<String[]>> answerMap = MapInit.answerMapStatic;
+//        HashMap<String, String[]> questionMapByAll = MapInit.questionMapByAllStatic;
+        LinkedHashMap<String, ArrayList<String[]>> answerMap = MapInit.answerMapStatic;
 
         Map<String, Object> jsonMap = new LinkedHashMap<>();  //放Json内容
         List<Map<String, Object>> questionRsList = new ArrayList<Map<String, Object>>();   //问题的数组

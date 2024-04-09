@@ -12,6 +12,6 @@ public class MapInit {
 //    public static HashMap<String, HashMap> paperQuestionMapStatic = new HashMap<>();   //以paper_id为key,以questionMap为value
 //    public static HashMap<String, String[]> questionMapByPaperStatic = new HashMap<>();       //以question_id为key，以question内容为value，但这个是分了paper去做的
     public static HashMap<String, String[]> questionMapByAllStatic = new HashMap<>();       //以question_id为key，以question内容为value，这个是全量的
-    public static HashMap<String, ArrayList<String[]>> answerMapStatic = new HashMap<>();         //以question_id为key，以answer内容为value
+    public static LinkedHashMap<String, ArrayList<String[]>> answerMapStatic = new LinkedHashMap<>();         //以question_id为key，以answer内容为value
 
 }
