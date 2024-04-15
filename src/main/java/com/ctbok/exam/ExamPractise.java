@@ -468,7 +468,7 @@ public class ExamPractise {
         jsonMap.put("userId", userId);
 
         sql = "select a.*,b.user_id from exams a left join exam_roles b on a.id = b.exam_id " +
-                "where a.status = '1' and b.user_id = " + userId + " and b.role = '1' order by id asc";
+                "where a.status = '1' and b.user_id = " + userId + " and b.role = '1' and now() < b.expired_date order by id asc";
         SqlRowSet query = jdbcTemplate.queryForRowSet(sql);
         while (query.next()) {
             Map<String, Object> queryMap = new LinkedHashMap<>();
@@ -677,7 +677,7 @@ public class ExamPractise {
         List<Map<String, Object>> questionSubjectList = new ArrayList<Map<String, Object>>();   //问题类型的数组
         String userId = json.get("userId").toString();
 
-        sql = "select a.*,b.name,b.language from exam_roles a left join exams b on a.exam_id = b.id where a.user_id = " + userId + " and a.role = '1' and b.status='1'";
+        sql = "select a.*,b.name,b.language from exam_roles a left join exams b on a.exam_id = b.id where a.user_id = " + userId + " and a.role = '1' and b.status='1' and now() < a.expired_date";
         SqlRowSet examRs = jdbcTemplate.queryForRowSet(sql);
         while (examRs.next()) {
             Map<String, Object> examMap = new LinkedHashMap<>();  //放exam的map
@@ -1194,7 +1194,7 @@ public class ExamPractise {
             Calendar calendar = Calendar.getInstance();
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
             String today = dateFormat.format(calendar.getTime());
-            String historySql = "insert history" + today + "(user_id,topic_count) values('" + userId + "','" + historyCount + "')";
+            String historySql = "insert history_record(user_id,topic_count) values('" + userId + "','" + historyCount + "')";
             jdbcTemplate.execute(historySql);
         }
         return true;

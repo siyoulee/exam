@@ -206,9 +206,9 @@ public class Practice {
                 jsonMap.put("userId", userId);
                 jsonMap.put("token", token);
 
-                sql = "insert exam_roles(user_id,exam_id,role) values('" + userId + "','12','1')";   //注册的时候，给予体验帐号
+                sql = "insert exam_roles(user_id,exam_id,role,expired_date) values('" + userId + "','12','1','2099-12-31 00:00:00')";   //注册的时候，给予体验帐号
                 jdbcTemplate.execute(sql);
-                sql = "insert exam_roles(user_id,exam_id,role) values('" + userId + "','13','1')";   //注册的时候，给予体验帐号
+                sql = "insert exam_roles(user_id,exam_id,role,expired_date) values('" + userId + "','13','1','2099-12-31 00:00:00')";   //注册的时候，给予体验帐号
                 jdbcTemplate.execute(sql);
 
             } else {   //老用户走这里
@@ -264,7 +264,7 @@ public class Practice {
         String questionSubject = "";
 
         // 第二步，拿出究竟这个人，有多少个课程是可以用的，下面这段，都是在有课程权限的情况下的增删改
-        sql = "select * from exam_roles where user_id = " + userId + " and role = '1'";
+        sql = "select * from exam_roles where user_id = " + userId + " and role = '1' and now() < expired_date";
         SqlRowSet rolesRS = jdbcTemplate.queryForRowSet(sql);
         while (rolesRS.next()) {
             examId = rolesRS.getString("exam_id");

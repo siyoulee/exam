@@ -34,7 +34,7 @@ public class Register {
         String userId = "";
 
         String searchSql = "select * from users where mobile='" + mobile + "'";
-        String insertSql = "insert into users(mobile,username,password,sex,mail,user_group_id,expired_date,status,gmt_create) values('" + mobile + "','" + username + "',MD5('" + password + "'),'" + sex + "','" + mail + "','3','2023/10/10','0',NOW())";
+        String insertSql = "insert into users(mobile,username,password,sex,mail,user_group_id,expired_date,status,gmt_create) values('" + mobile + "','" + username + "',MD5('" + password + "'),'" + sex + "','" + mail + "','3','2099/12/31 00:00:00','0',NOW())";
         List queryList = jdbcTemplate.queryForList(searchSql);
 
         if (queryList.isEmpty()) {
@@ -44,7 +44,7 @@ public class Register {
             userRowSet.next();
             userId = userRowSet.getString("id");
 
-            sql = "insert exam_roles(user_id,exam_id,role) values('" + userId + "'," + examType + ",'1')";
+            sql = "insert exam_roles(user_id,exam_id,role,expired_date) values('" + userId + "'," + examType + ",'1','2099-12-31 00:00:00')";
             jdbcTemplate.execute(sql);
             return "{\n\"registerStatus\":\"success\"}";
         } else {
@@ -159,7 +159,7 @@ public class Register {
         List queryList;
 
         //取Json一级的内容，不含菜单，是基本的登录信息
-        sql = "select * from users where mobile='" + mobile + "' and password=MD5('" + password + "') and status = '1' and now() < expired_date limit 1";
+        sql = "select * from users where mobile='" + mobile + "' and password=MD5('" + password + "') and status = '1' limit 1";
         queryList = jdbcTemplate.queryForList(sql);
 
         if (queryList.isEmpty()) {
@@ -186,12 +186,14 @@ public class Register {
             //取Json二级的内容，即一级菜单
             jsonMap.put("menusLv1", GetMenus(userGroupId));
 
-            sql = "select * from exam_roles where user_id = " + userId + " and role = '1'";       //拿取已赋权限的examId，可能有多个
+            sql = "select * from exam_roles where user_id = " + userId + " and role = '1' and  now() < expired_date";       //拿取已赋权限的examId，可能有多个
             SqlRowSet rolesRS = jdbcTemplate.queryForRowSet(sql);
             while (rolesRS.next()) {
                 examId = examId + rolesRS.getString("exam_id") + ",";
             }
-            examId = examId.substring(0, examId.length() - 1);
+            if (!examId.equals("")) {
+                examId = examId.substring(0, examId.length() - 1);
+            }
 
             GenerateSequenceExamList(userId);
         }
@@ -216,7 +218,7 @@ public class Register {
 
             String[] examIdList = examId.split(",");
             for (int i = 0; i < examIdList.length; i++) {
-                sql = "insert into exam_roles(user_id,exam_id,role) values('" + userId + "','" + examIdList[i].toString() + "','1')";
+                sql = "insert into exam_roles(user_id,exam_id,role,expired_date) values('" + userId + "','" + examIdList[i].toString() + "','1',NOW() + INTERVAL 1 YEAR)";
                 jdbcTemplate.execute(sql);
             }
 
@@ -389,7 +391,7 @@ public class Register {
         String questionSubject = "";
 
         // 第二步，拿出究竟这个人，有多少个课程是可以用的，下面这段，都是在有课程权限的情况下的增删改
-        sql = "select * from exam_roles where user_id = " + userId + " and role = '1'";
+        sql = "select * from exam_roles where user_id = " + userId + " and role = '1' and now() < expired_date";
         SqlRowSet rolesRS = jdbcTemplate.queryForRowSet(sql);
         while (rolesRS.next()) {
             examId = rolesRS.getString("exam_id");

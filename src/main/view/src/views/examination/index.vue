@@ -620,6 +620,18 @@ export default {
       });
     },
     handleSubmit() {
+      let myFlag=false;
+      this.questionList.forEach(items=>{
+        items.list.forEach(a=>{
+          if(!a.selectAnswer){
+            myFlag=true;
+          }
+        })
+      })
+      if(myFlag){
+        this.$alert('还有未完成的题目，请检查后再提交', '提示');
+        return
+      }
       let flag = false;
       this.answerSheetList.map(question => {
         question.list.map(item => {
