@@ -174,6 +174,7 @@ public class ExamPractise {
         String answerSequence = "";
         String questionType = "";
         String correctStatus = "1";
+        String questionIdList = "";  //把接收过来的question_list弄成xx,xx,xx的方式，以便更新sequence_exam更快一点
         int intFav = 0;
 
         //拿取课程的语言
@@ -213,9 +214,10 @@ public class ExamPractise {
         ////历史做题数记录完成
 
 
-        for (int i = 0; i < questionListGet.size(); i++) {
+        for (int i = 0; i < questionListGet.size(); i++) {               //从questionList中遍历每一题，看其答案是否正确
             Map questionMapGet = (Map) questionListGet.get(i);           //从原始的json中拿数据
             Map<String, Object> questionMapPut = new LinkedHashMap<>();  //新的Map
+            questionIdList = questionIdList + questionId + ",";
 
             //从原始的中拿数据，不再读数据库
             questionId = questionMapGet.get("questionId").toString();
@@ -285,7 +287,7 @@ public class ExamPractise {
                     }
                 }
 
-                if (!practiseType.equals("4")) {
+                if (!practiseType.equals("4")) {     //如果不是问答题
                     ////先初始化错题
                     sql = "delete from wrong_question where user_id = " + userId + " and paper_id = " + paperId;
                     jdbcTemplate.execute(sql);
@@ -307,7 +309,7 @@ public class ExamPractise {
                     }
 
                     //更新exam_sequence的状态
-                    sql = "update exam_sequence set do_status = '2', status = '" + correctStatus + "', paper_id = " + paperId + ", answer_id = '" + answerIdList + "' gmt_update = now()  where question_id = " + questionId + " and user_id = " + userId;
+                    sql = "update exam_sequence set do_status = '2', status = '" + correctStatus + "', paper_id = " + paperId + ", answer_id = '" + answerIdList + "', gmt_update = now()  where question_id = " + questionId + " and user_id = " + userId;
                     jdbcTemplate.execute(sql);
                     //exam_sequence状态更新完成
                 }
@@ -533,6 +535,7 @@ public class ExamPractise {
         String nextStatus = "";
         String paperId = "";
         String questionSubject = "";
+        String repeat = "";
 
         try {
             questionId = json.getString("questionId").toString();
@@ -608,6 +611,7 @@ public class ExamPractise {
                     SqlRowSet getQuestionId = jdbcTemplate.queryForRowSet(sql);
                     getQuestionId.next();
                     currectQuestionId = getQuestionId.getString("question_id");
+                    repeat = "1";      //是否全部做完的标准
 
                 } else {   //否则就拿第一条未做
                     sql = "select * from exam_sequence where user_id = " + userId + " and do_status = '1' and paper_id = " + paperId +
@@ -618,7 +622,11 @@ public class ExamPractise {
                 }
             }
 
-            jsonMap.putAll(GetTopic(currectQuestionId, userId));
+            if (repeat.equals("1")) {      //如果是全部做完，拿第一条，走第一个分支
+                jsonMap.putAll(GetTopicDetail(currectQuestionId, userId));
+            } else {                       //否则，如果是正常做题的时候，走下面的分支
+                jsonMap.putAll(GetTopic(currectQuestionId, userId));
+            }
             jsonMap.putAll(GetSequenceList(userId, paperId, types));
 
         } else if (!questionId.equals("") && !answerId.equals("")) {  //代表提交答案，questionId有，answerId有，answerSequence有
