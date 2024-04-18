@@ -175,6 +175,7 @@ public class ExamPractise {
         String questionType = "";
         String correctStatus = "1";
         String questionIdList = "";  //把接收过来的question_list弄成xx,xx,xx的方式，以便更新sequence_exam更快一点
+        String sqlWrong = "";
         int intFav = 0;
 
         //拿取课程的语言
@@ -213,6 +214,10 @@ public class ExamPractise {
         Boolean isHistoryRecord = historyRecord(userId, questionListGet.size(), headers);
         ////历史做题数记录完成
 
+        ////先初始化错题
+        sql = "delete from wrong_question where user_id = " + userId + " and paper_id = " + paperId;
+        jdbcTemplate.execute(sql);
+        ////错题初始化完成
 
         for (int i = 0; i < questionListGet.size(); i++) {               //从questionList中遍历每一题，看其答案是否正确
             Map questionMapGet = (Map) questionListGet.get(i);           //从原始的json中拿数据
@@ -221,23 +226,6 @@ public class ExamPractise {
 
             //从原始的中拿数据，不再读数据库
             questionId = questionMapGet.get("questionId").toString();
-//            System.out.println(questionId);
-
-            /*
-            //这里看看有没有收藏的题目，如果有收藏的，则标记此题是收藏题目
-            if (arrFavorites.length != 0) {      //如果有收藏题
-                for (int n = 0; n < arrFavorites.length; n++) {   //如果有大于等于1条收藏的数据
-                    if (arrFavorites[n] == Integer.valueOf(questionId)) {
-                        intFav = 1;
-                        break;
-                    } else {
-                        intFav = 0;
-                    }
-                }
-            } else {   //如果完全没有收藏的数据（0条收藏），走这个if条件
-                intFav = 0;
-            }
-            */
 
             try {
                 answerSequence = questionMapGet.get("answerSequence").toString();
@@ -288,25 +276,16 @@ public class ExamPractise {
                 }
 
                 if (!practiseType.equals("4")) {     //如果不是问答题
-                    ////先初始化错题
-                    sql = "delete from wrong_question where user_id = " + userId + " and paper_id = " + paperId;
-                    jdbcTemplate.execute(sql);
-                    ////错题初始化完成
-
                     if (correctStatus.equals("1")) {   //如果有数据，那证明答案是对的
-                        //上面已经全部错题删除了的了
-//                        sql = "delete from wrong_question where user_id = " + userId + " and question_id = " + questionId;   //删除错误库的数据
-//                        jdbcTemplate.execute(sql);
                         correctStatus = "1";
 
                     } else {    //否则就是错误的
-                        //上面已经全部删除了错题的数据
-//                        sql = "delete from wrong_question where user_id = " + userId + " and question_id = " + questionId;   //先删除原来的
-//                        jdbcTemplate.execute(sql);
+                        //插入错题的数据
                         sql = "insert wrong_question(question_id, exam_id, paper_id, user_id, status) values(" + questionId +
                                 ", " + examId + ", " + paperId + ", " + userId + ", '1')";          //再增加新的
                         jdbcTemplate.execute(sql);
                     }
+
 
                     //更新exam_sequence的状态
                     sql = "update exam_sequence set do_status = '2', status = '" + correctStatus + "', paper_id = " + paperId + ", answer_id = '" + answerIdList + "', gmt_update = now()  where question_id = " + questionId + " and user_id = " + userId;
@@ -686,7 +665,7 @@ public class ExamPractise {
             examList.add(examMap);
         }
 
-        //** 组装试题
+        //** 组装试题数据
         Map<String, Object> questionSubject1 = new LinkedHashMap<>();
         questionSubject1.put("id", "1");
         questionSubject1.put("name", "练习题");

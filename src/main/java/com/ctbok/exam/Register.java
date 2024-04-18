@@ -412,7 +412,7 @@ public class Register {
                     paperId = questionRS.getString("paper_id");
                     questionType = questionRS.getString("question_type");
                     questionSubject = questionRS.getString("question_subject");
-                    insertSql = insertSql + " ('" + userId + "','" + questionId + "','" + examId + "','" + paperId + "','" + questionType + "','" + questionSubject + "','3','0'),";
+                    insertSql = insertSql + " ('" + userId + "','" + questionId + "','" + examId + "','" + paperId + "','" + questionType + "','" + questionSubject + "','','1'),";
                 }
                 insertSql = insertSql.substring(0, insertSql.length() - 1);  //最后的，不能要
                 jdbcTemplate.execute(insertSql);   //最后才执行insert，是因为这样效率更高，另外，
