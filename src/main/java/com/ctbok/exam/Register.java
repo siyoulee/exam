@@ -205,7 +205,7 @@ public class Register {
     public String ExchangeCode(@RequestBody JSONObject json) {
         Map<String, Object> jsonMap = new LinkedHashMap<>();  //放Json内容
         String userId = json.get("userId").toString();
-        String code = json.get("code").toString().replace("'", "").replace(" union ", "").replace(" and ", "").replace(" or ", "");
+        String code = json.get("code").toString().replace("'", "").replace(" union ", "").replace(" and ", "").replace(" or ", "").replace(" ","");
         sql = "select count(*) as total from exchange where binary code = '" + code + "' and status = '1'";    //查看兑换码是否正确
         SqlRowSet codeRowSetTotal = jdbcTemplate.queryForRowSet(sql);
         codeRowSetTotal.next();

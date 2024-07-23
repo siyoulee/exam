@@ -37,8 +37,21 @@ public class ExamPractise {
         String examId = json.get("examId").toString();  //放试卷ID
         String userId = json.get("userId").toString();       //放用户ID
         String practiseType = json.get("practiseType").toString();
+        String[] paperValues;
+        String paperName = "";
+        String paperDesc = "";
+        String paperPoint = "";
+        String paperTime = "";
+
+
         try {
             paperId = json.get("paperId").toString();
+            /* 试卷信息获取 */
+            paperValues = paperMap.get(paperId);
+            paperName = paperValues[1];   //试卷名称：paper_name
+            paperDesc = paperValues[2];   //试卷描述：paper_desc
+            paperPoint = paperValues[3];  //试卷分数：paper_points
+            paperTime = paperValues[4];   //考试时长：paper_time
         } catch (Exception e) {
         }
 
@@ -46,13 +59,6 @@ public class ExamPractise {
             questionSubject = json.get("questionSubject").toString();
         } catch (Exception e) {
         }
-
-        /* 试卷信息获取 */
-        String[] paperValues = paperMap.get(paperId);
-        String paperName = paperValues[1];   //试卷名称：paper_name
-        String paperDesc = paperValues[2];   //试卷描述：paper_desc
-        String paperPoint = paperValues[3];  //试卷分数：paper_points
-        String paperTime = paperValues[4];   //考试时长：paper_time
 
 
         /* 拿取课程的语言 */
@@ -215,8 +221,10 @@ public class ExamPractise {
         ////历史做题数记录完成
 
         ////先初始化错题
-        sql = "delete from wrong_question where user_id = " + userId + " and paper_id = " + paperId;
-        jdbcTemplate.execute(sql);
+        if (!practiseType.equals("4")) {    //模拟题是没有paper_id的
+            sql = "delete from wrong_question where user_id = " + userId + " and paper_id = " + paperId;
+            jdbcTemplate.execute(sql);
+        }
         ////错题初始化完成
 
         for (int i = 0; i < questionListGet.size(); i++) {               //从questionList中遍历每一题，看其答案是否正确
@@ -249,10 +257,7 @@ public class ExamPractise {
             questionMapPut.put("questionType", questionContent[0]);
             questionMapPut.put("questionPoint", questionContent[4]);
             questionMapPut.put("clarify", questionContent[5]);
-            questionMapPut.put("fileId", questionContent[6]);
-            questionMapPut.put("appId", questionContent[7]);
-            questionMapPut.put("psign", questionContent[8]);
-            questionMapPut.put("wxVideoUrl", questionContent[11]);
+            questionMapPut.put("videoUrl", questionContent[8]);
             questionMapPut.put("selectAnswer", answerIdList);   //选择答案
             questionType = questionContent[0];
 
@@ -275,7 +280,7 @@ public class ExamPractise {
                     }
                 }
 
-                if (!practiseType.equals("4")) {     //如果不是问答题
+                if (!practiseType.equals("4")) {     //如果不是模拟考
                     if (correctStatus.equals("1")) {   //如果有数据，那证明答案是对的
                         correctStatus = "1";
 
@@ -335,7 +340,7 @@ public class ExamPractise {
 
     @RequestMapping(path = "/SearchTopic", produces = "application/json;charset=UTF-8", method = RequestMethod.POST)
     public String SearchTopic(@RequestBody JSONObject json, @RequestHeader HttpHeaders headers) {
-        Map<String, Object> jsonMap = new LinkedHashMap<>();  //放Json内容
+//        Map<String, Object> jsonMap = new LinkedHashMap<>();  //放Json内容
         String userId = json.get("userId").toString();
         String keyWord = json.get("keyWord").toString();
         String examId = json.get("examId").toString();
@@ -345,6 +350,9 @@ public class ExamPractise {
         int correctId = 0;   //正确的ID
         int correctAnswer = 0;   //正确的选择，这里是因为变量变了，所以必须要多弄一个出来
         int selectAnswer = 0;    //选择的答案，也是ID，是与上面的保持一致
+
+//        jsonMap.put("userId", userId);
+
 
 
         String returnJson = "{\n" + "\"userId\":\"" + userId + "\",\n" +    //返回的json变
@@ -356,12 +364,16 @@ public class ExamPractise {
         //**  这里是拿题目
         sql = "select * from exam_question where question_name like '%" + keyWord + "%'" +
                 " and status='1' and exam_id = " + examId;
+//        sql = "select * from exam_question where paper_id = 23 and status = '1'";
+        //19~35
+
         questionList = jdbcTemplate.queryForList(sql);
+//        Map<String, Object> questionMapPut = new LinkedHashMap<>();  //新的Map
 
         Iterator itQuestion = questionList.iterator();
         while (itQuestion.hasNext()) {
-
             i = 0;  //计数器用
+
             Map questionMap = (Map) itQuestion.next();
             String questionId = questionMap.get("id").toString();
             String questionType = questionMap.get("question_type").toString();
@@ -369,9 +381,8 @@ public class ExamPractise {
             String questionNameCn = questionMap.get("question_name_cn").toString();
             String questionPoint = questionMap.get("question_points").toString();
             String clarify = questionMap.get("clarify").toString();
-            String fileId = questionMap.get("file_id").toString();
-            String appId = questionMap.get("app_id").toString();
-            String psign = questionMap.get("psign").toString();
+            String videoUrl = questionMap.get("video_url").toString();
+
             String correctAnswerReply = "";    //正确的答案临时字一会去串
 
             returnJson = returnJson + "{\n\"questionId\":\"" + questionId + "\",\n" +
@@ -380,9 +391,7 @@ public class ExamPractise {
                     "\"questionNameCn\":\"" + questionNameCn + "\"," +
                     "\"questionPoint\":\"" + questionPoint + "\",\n" +
                     "\"clarify\":\"" + clarify + "\",\n" +
-                    "\"fileId\":\"" + fileId + "\",\n" +
-                    "\"appId\":\"" + appId + "\",\n" +
-                    "\"psign\":\"" + psign + "\",\n" +
+                    "\"videoUrl\":\"" + videoUrl + "\",\n" +
                     "\"answerList\":[\n";
 
 
@@ -407,7 +416,6 @@ public class ExamPractise {
                 }
 
                 Map answerMap = (Map) itAnswer.next();
-//                System.out.println("answer_id:" + answerMap.get("id").toString());
                 returnJson = returnJson + "{\n" +
                         "\"answerId\":\"" + answerMap.get("id") + "\",\n" +
                         "\"answerContentEn\":\"" + optionSelect + ". " + answerMap.get("answer_content") + "\",\n" +
@@ -668,12 +676,12 @@ public class ExamPractise {
         //** 组装试题数据
         Map<String, Object> questionSubject1 = new LinkedHashMap<>();
         questionSubject1.put("id", "1");
-        questionSubject1.put("name", "练习题");
+        questionSubject1.put("name", "最新真题");
         questionSubjectList.add(questionSubject1);
-//        Map<String, Object> questionSubject2 = new LinkedHashMap<>();
-//        questionSubject2.put("id", "2");
-//        questionSubject2.put("name", "模拟题");
-//        questionSubjectList.add(questionSubject2);
+        Map<String, Object> questionSubject2 = new LinkedHashMap<>();
+        questionSubject2.put("id", "2");
+        questionSubject2.put("name", "历史题库");
+        questionSubjectList.add(questionSubject2);
 
         jsonMap.put("examList", examList);
         jsonMap.put("questionSubject", questionSubjectList);
@@ -701,10 +709,7 @@ public class ExamPractise {
         jsonMap.put("questionNameCn", questionContent[2]);
         jsonMap.put("questionPoint", questionContent[4]);
         jsonMap.put("clarify", questionContent[5]);
-        jsonMap.put("fileId", questionContent[6]);
-        jsonMap.put("appId", questionContent[7]);
-        jsonMap.put("psign", questionContent[8]);
-        jsonMap.put("examId", questionContent[9]);
+        jsonMap.put("examId", questionContent[6]);
         questionType = questionContent[0];            //拿取题型并赋值，用于后面的不同题型判断
 
 
@@ -765,7 +770,7 @@ public class ExamPractise {
                 if (types.equals("0")) {    //如果是错题重做，或者收藏题目重做
 
                     //更新状态
-                    sql = "update exam_sequence set status = '1', answer_id = '" + answerId + "', wrong_do_status = '2' where user_id = " + userId + " and question_id = " + questionId;
+                    sql = "update exam_sequence set status = '1', answer_id = '" + answerId + "', wrong_do_status = '2', gmt_update = NOW() where user_id = " + userId + " and question_id = " + questionId;
                     jdbcTemplate.execute(sql);
                     //删除错误数据
                     sql = "delete from wrong_question where user_id = " + userId + " and question_id = " + questionId;
@@ -774,13 +779,13 @@ public class ExamPractise {
 
                     sql = "delete from wrong_question where user_id = " + userId + " and question_id = " + questionId;
                     jdbcTemplate.execute(sql);
-                    sql = "update exam_sequence set status = '1', answer_id = '" + answerId + "', fav_do_status = '2' where user_id = " + userId + " and question_id = " + questionId;
+                    sql = "update exam_sequence set status = '1', answer_id = '" + answerId + "', fav_do_status = '2', gmt_update = NOW() where user_id = " + userId + " and question_id = " + questionId;
                     jdbcTemplate.execute(sql);
                 } else {
 
                     sql = "delete from wrong_question where user_id = " + userId + " and question_id = " + questionId;
                     jdbcTemplate.execute(sql);
-                    sql = "update exam_sequence set status = '1', answer_id = '" + answerId + "', do_status = '2' where user_id = " + userId + " and question_id = " + questionId;
+                    sql = "update exam_sequence set status = '1', answer_id = '" + answerId + "', do_status = '2', gmt_update = NOW() where user_id = " + userId + " and question_id = " + questionId;
                     jdbcTemplate.execute(sql);
                 }
                 correctStatus = "1";    //答案正确与否状态标识
@@ -789,7 +794,7 @@ public class ExamPractise {
                 if (types.equals("0")) {    //如果是错题重做，或者收藏题目重做
 
                     //更新状态
-                    sql = "update exam_sequence set status = '0', answer_id = '" + answerId + "', wrong_do_status = '2' where user_id = " + userId + " and question_id = " + questionId;
+                    sql = "update exam_sequence set status = '0', answer_id = '" + answerId + "', wrong_do_status = '2', gmt_update = NOW() where user_id = " + userId + " and question_id = " + questionId;
                     jdbcTemplate.execute(sql);
                 } else if (types.equals("2")) {    //如果收藏题目做错的话
 
@@ -797,7 +802,7 @@ public class ExamPractise {
                     jdbcTemplate.execute(sql);
                     sql = "insert wrong_question(question_id,user_id,exam_id,paper_id) values('" + questionId + "','" + userId + "','" + examId + "','" + paperId + "')";
                     jdbcTemplate.execute(sql);
-                    sql = "update exam_sequence set status = '0', answer_id = '" + answerId + "', fav_do_status = '2' where user_id = " + userId + " and question_id = " + questionId;
+                    sql = "update exam_sequence set status = '0', answer_id = '" + answerId + "', fav_do_status = '2', gmt_update = NOW() where user_id = " + userId + " and question_id = " + questionId;
                     jdbcTemplate.execute(sql);
                 } else {
 
@@ -805,14 +810,14 @@ public class ExamPractise {
                     jdbcTemplate.execute(sql);
                     sql = "insert wrong_question(question_id,user_id,exam_id,paper_id) values('" + questionId + "','" + userId + "','" + examId + "','" + paperId + "')";
                     jdbcTemplate.execute(sql);
-                    sql = "update exam_sequence set status = '0', answer_id = '" + answerId + "', do_status = '2' where user_id = " + userId + " and question_id = " + questionId;
+                    sql = "update exam_sequence set status = '0', answer_id = '" + answerId + "', do_status = '2', gmt_update = NOW() where user_id = " + userId + " and question_id = " + questionId;
                     jdbcTemplate.execute(sql);
                 }
                 correctStatus = "0";    //答案正确与否状态标识
             }
         } else {   //如果是问答题
             correctStatus = "1";
-            sql = "update exam_sequence set status = '1', do_status = '2', answer_id = '" + correctAnswerId + "' where user_id = " + userId + " and question_id = " + questionId;
+            sql = "update exam_sequence set status = '1', do_status = '2', answer_id = '" + correctAnswerId + "', gmt_update = NOW() where user_id = " + userId + " and question_id = " + questionId;
             jdbcTemplate.execute(sql);
         }
 
@@ -844,7 +849,8 @@ public class ExamPractise {
         jsonMap.put("questionNameEn", questionDetail[1]);
         jsonMap.put("questionNameCn", questionDetail[2]);
         jsonMap.put("questionPoint", questionDetail[4]);
-        jsonMap.put("examId", questionDetail[9]);
+        jsonMap.put("examId", questionDetail[6]);
+        jsonMap.put("videoUrl", questionDetail[8]);
 
 
         /* 这里找出是不是收藏的题目 */
@@ -929,10 +935,8 @@ public class ExamPractise {
         jsonMap.put("questionNameCn", questionContent[2]);
         jsonMap.put("questionPoint", questionContent[4]);
         jsonMap.put("clarify", questionContent[5]);
-        jsonMap.put("fileId", questionContent[6]);
-        jsonMap.put("appId", questionContent[7]);
-        jsonMap.put("psign", questionContent[8]);
-        jsonMap.put("examId", questionContent[9]);
+        jsonMap.put("examId", questionContent[6]);
+        jsonMap.put("videoUrl", questionContent[8]);
         questionType = questionContent[0];
 
         //** 这里找出是不是收藏的题目
@@ -1167,15 +1171,15 @@ public class ExamPractise {
     }
 
     public boolean historyRecord(String userId, int historyCount, HttpHeaders headers) {   //记录做题的历史数
-        String token = headers.getFirst("token");  //解释token
-        String historyStatus = CommonLib.getHistoryStatus(token);  //这里记录着是否需要记录该人员的做题历史记录
-        if (historyStatus.equals("1")) {   //只有标记是需要记录历史做题数的，才进行记录，在users表中进行相关人员标识
+//        String token = headers.getFirst("token");  //解释token
+//        String historyStatus = CommonLib.getHistoryStatus(token);  //这里记录着是否需要记录该人员的做题历史记录
+//        if (historyStatus.equals("1")) {   //只有标记是需要记录历史做题数的，才进行记录，在users表中进行相关人员标识
             Calendar calendar = Calendar.getInstance();
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
             String today = dateFormat.format(calendar.getTime());
             String historySql = "insert history_record(user_id,topic_count) values('" + userId + "','" + historyCount + "')";
             jdbcTemplate.execute(historySql);
-        }
+//        }
         return true;
     }
 

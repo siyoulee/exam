@@ -98,12 +98,9 @@ public class TopicLib {
         [3]:question_subject
         [4]:question_points
         [5]:clarify
-        [6]:file_id
-        [7]:psign
-        [8]:app_id
-        [9]:exam_id
-        [10]:paper_id
-        [11]:wx_video_url
+        [6]:exam_id
+        [7]:paper_id
+        [8]:video_url
          */   //参数说明
         questionMapByAll.clear();
         answerMap.clear();
@@ -111,11 +108,16 @@ public class TopicLib {
         sql = "select * from exam_question where status = '1' order by id asc";
         rs = jdbcTemplate.queryForRowSet(sql);
         while (rs.next()) {    //把问题清单捞出来
-            String[] questionRecord = {rs.getString("question_type"), rs.getString("question_name"),
-                    rs.getString("question_name_cn"), rs.getString("question_subject"),
-                    rs.getString("question_points"), rs.getString("clarify"),
-                    rs.getString("file_id"), rs.getString("app_id"), rs.getString("psign"),
-                    rs.getString("exam_id"), rs.getString("paper_id"), rs.getString("wx_video_url")};
+            String[] questionRecord = {
+                    rs.getString("question_type"),
+                    rs.getString("question_name"),
+                    rs.getString("question_name_cn"),
+                    rs.getString("question_subject"),
+                    rs.getString("question_points"),
+                    rs.getString("clarify"),
+                    rs.getString("exam_id"),
+                    rs.getString("paper_id"),
+                    rs.getString("video_url")};
             questionMapByAll.put(rs.getString("id"), questionRecord);     //以question_id为key，question内容为value
 
             //处理答案

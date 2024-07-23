@@ -184,10 +184,7 @@ public class TopicManagement {
         jsonMap.put("questionPoints", questionRs.getString("question_points"));
         jsonMap.put("difficulty", questionRs.getString("difficulty"));
         jsonMap.put("confidence", questionRs.getString("confidence"));
-        jsonMap.put("fileId", questionRs.getString("file_id"));
-        jsonMap.put("appId", questionRs.getString("app_id"));
-        jsonMap.put("psign", questionRs.getString("psign"));
-        jsonMap.put("wxVideoUrl", questionRs.getString("wx_video_url"));
+        jsonMap.put("videoUrl", questionRs.getString("video_url"));
         jsonMap.put("clarify", questionRs.getString("clarify"));
         jsonMap.put("source", questionRs.getString("source"));
         jsonMap.put("status", questionRs.getString("status"));
@@ -215,16 +212,10 @@ public class TopicManagement {
     @RequestMapping(path = "/UpdateTopic", produces = "application/json;charset=UTF-8", method = RequestMethod.POST)
     public String UpdateTopic(@RequestBody JSONObject json) {
         Map<String, Object> jsonMap = new LinkedHashMap<>();  //放Json内容
-        Map queryMap;
-        List queryList;
-        Iterator it;
 
         String clarify = "";
         String questionNameCn = "";
-        String appId = "";
-        String fileId = "";
-        String psign = "";
-        String wxVideoUrl = "";
+        String videoUrl = "";
 
         String questionId = json.get("questionId").toString();
         String adminId = json.get("adminId").toString();
@@ -237,10 +228,7 @@ public class TopicManagement {
         }
 
         try {
-            appId = json.get("appId").toString();
-            fileId = json.get("fileId").toString();
-            psign = json.get("psign").toString();
-            wxVideoUrl = json.get("wxVideoUrl").toString();
+            videoUrl = json.get("video_url").toString();
         } catch (Exception e) {
         }
 
@@ -248,7 +236,6 @@ public class TopicManagement {
             clarify = json.get("clarify").toString().replace("'", "''");
         } catch (Exception e) {
         }
-
 
         String questionPoints = json.get("questionPoints").toString();
         String questionSubject = json.get("questionSubject").toString();
@@ -269,10 +256,7 @@ public class TopicManagement {
                 ",difficulty = '" + difficulty + "'" +
                 ",confidence = '" + confidence + "'" +
                 ",question_points = '" + questionPoints + "'" +
-                ",file_id = '" + fileId + "'" +
-                ",app_id = '" + appId + "'" +
-                ",psign = '" + psign + "'" +
-                ",wx_video_url = '" + wxVideoUrl + "'" +
+                ",video_url = '" + videoUrl + "'" +
                 ",clarify = '" + clarify + "'" +
                 ",source = '" + source + "'" +
                 ",status = '" + status + "'" +
@@ -316,10 +300,7 @@ public class TopicManagement {
 
         String clarify = "";
         String questionNameCn = "";
-        String appId = "";
-        String fileId = "";
-        String psign = "";
-        String wxVideoUrl = "";
+        String videoUrl = "";
         String difficulty = "";
         String confidence = "";
 
@@ -333,10 +314,7 @@ public class TopicManagement {
         }
 
         try {
-            appId = json.get("appId").toString();
-            fileId = json.get("fileId").toString();
-            psign = json.get("psign").toString();
-            wxVideoUrl = json.get("wxVideoUrl").toString();
+            videoUrl = json.get("videoUrl").toString();
         } catch (Exception e) {
         }
 
@@ -359,10 +337,10 @@ public class TopicManagement {
         String status = json.get("status").toString();
 
         sql = "insert into exam_question(exam_id,paper_id,question_type,question_subject,question_name,question_name_cn,difficulty,confidence," +
-                "question_points,file_id,app_id,psign,wx_video_url,clarify,source,status) " +
+                "question_points,video_url,clarify,source,status) " +
                 "values('" + examId + "','" + paperId + "','" + questionType + "','" + questionSubject + "'," +
                 "'" + questionNameEn + "','" + questionNameCn + "','" + difficulty + "','" + confidence + "'," +
-                "'" + questionPoints + "','" + fileId + "','" + appId + "','" + psign + "','" + wxVideoUrl + "'," +
+                "'" + questionPoints + "','" + videoUrl + "'," +
                 "'" + clarify + "','" + source + "','" + status + "')";
         jdbcTemplate.execute(sql);
 
@@ -523,11 +501,11 @@ public class TopicManagement {
         List<Map<String, Object>> questionSubjectList = new ArrayList<Map<String, Object>>();   //题型的列表
         Map<String, Object> questionSubjectMap1 = new LinkedHashMap<>();
         questionSubjectMap1.put("subjectId", "1");
-        questionSubjectMap1.put("subjectName", "练习题");
+        questionSubjectMap1.put("subjectName", "最新真题");
         questionSubjectList.add(questionSubjectMap1);
         Map<String, Object> questionSubjectMap2 = new LinkedHashMap<>();
         questionSubjectMap2.put("subjectId", "2");
-        questionSubjectMap2.put("subjectName", "模拟题");
+        questionSubjectMap2.put("subjectName", "历史题库");
         questionSubjectList.add(questionSubjectMap2);
         optionMap.put("questionSubject", questionSubjectList);
         //* 取questionSubject（题目类型）组装完成

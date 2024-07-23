@@ -78,7 +78,7 @@ public class Practice {
 //        jdbcTemplate.execute(sql);
 
         //已做的题目
-        sql = "select count(*) as sequenceDo from exam_sequence where user_id = " + userId + " and status != '3' and exam_id = " + examId;
+        sql = "select count(*) as sequenceDo from exam_sequence where user_id = " + userId + " and do_status = '2' and exam_id = " + examId;
         SqlRowSet queryDo = jdbcTemplate.queryForRowSet(sql);
         queryDo.next();
         sequenceDo = queryDo.getString("sequenceDo");

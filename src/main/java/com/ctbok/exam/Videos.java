@@ -55,9 +55,7 @@ public class Videos {
         }
         jsonMap.put("examList", examMapList);
 
-
         List<Map<String, Object>> videoMapList = new ArrayList<Map<String, Object>>();   //视频的Map
-        Map<String, Object> videoListMap = new LinkedHashMap<>();   //视频清单的Map
 
         if (examId.equals("")) {      //如果为空，取全部的数据，如果不为零的正整数，则直接拿ID
             sql = "select a.* from videos a left join exam_roles b on a.exam_id = b.exam_id where b.role = '1' and a.status = '1' and b.user_id = " + userId;
@@ -80,10 +78,7 @@ public class Videos {
             videoMap.put("videoPhoto", queryMap.get("video_photo"));
             videoMap.put("publishDate", queryMap.get("publish_date"));
             videoMap.put("videoLength", queryMap.get("video_length"));
-            videoMap.put("fileId", queryMap.get("file_id"));
-            videoMap.put("appId", queryMap.get("app_id"));
-            videoMap.put("psign", queryMap.get("psign"));
-            videoMap.put("wxVideoUrl", queryMap.get("wxVideoUrl"));
+            videoMap.put("videoUrl", queryMap.get("video_url"));
             videoMapList.add(videoMap);
         }
         jsonMap.put("videoList", videoMapList);

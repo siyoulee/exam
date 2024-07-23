@@ -623,7 +623,7 @@ export default {
       let myFlag=false;
       this.questionList.forEach(items=>{
         items.list.forEach(a=>{
-          if(!a.selectAnswer){
+          if(a.questionType != '3' && !a.selectAnswer){
             myFlag=true;
           }
         })
@@ -632,18 +632,18 @@ export default {
         this.$alert('还有未完成的题目，请检查后再提交', '提示');
         return
       }
-      let flag = false;
-      this.answerSheetList.map(question => {
-        question.list.map(item => {
-          if (item.questionType != '3' && !item.selectAnswer) {
-            flag = true;
-          }
-        })
-      })
-      if (flag) {
-        this.$alert('还有未完成的题目，请检查后再提交', '提示');
-        return
-      }
+      // let flag = false;
+      // this.answerSheetList.map(question => {
+      //   question.list.map(item => {
+      //     if (item.questionType != '3' && !item.selectAnswer) {
+      //       flag = true;
+      //     }
+      //   })
+      // })
+      // if (flag) {
+      //   this.$alert('还有未完成的题目，请检查后再提交', '提示');
+      //   return
+      // }
       this.$confirm('确定要提交吗？', '提示', {
         confirmButtonText: '确定',
         cancelButtonText: '继续答题',
